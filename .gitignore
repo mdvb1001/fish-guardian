@@ -1,0 +1,44 @@
+# Environment and secrets
+.env
+*.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Data files (too large for git)
+baselines_v1.json
+*.json.bak
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Reports (regenerated)
+24h_report.txt
+*.report.txt
+
+# Backup files
+*.backup
+*_backup.py
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# System
+.cache/
