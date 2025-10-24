@@ -2,21 +2,25 @@
 
 ## Quick Reference
 
-**Single Source of Truth:** Raspberry Pi (`pi-fish:~/Development/fish-guardian`)
+**Single Source of Truth:** GitHub (https://github.com/mdvb1001/fish-guardian)
 
 ### Most Common Commands
 
 ```bash
-# Pull latest changes from Pi to local machine
+# Pull latest changes from GitHub
 cd /Users/Max/Desktop/max/coding/codingProjects/personalProjects/fish-guardian
-git pull pi-fish master
+git pull origin main
 
-# View what changed on Pi
-ssh pi-fish "cd ~/Development/fish-guardian && git status"
-ssh pi-fish "cd ~/Development/fish-guardian && git log --oneline -5"
+# On Pi - make changes and push to GitHub
+ssh pi-fish
+cd ~/Development/fish-guardian
+# ... make changes ...
+git add -A
+git commit -m "Your descriptive message"
+git push origin main
 
-# Make changes and commit on Pi
-ssh pi-fish "cd ~/Development/fish-guardian && git add -A && git commit -m 'Your message'"
+# On local Mac - pull the changes
+git pull origin main
 ```
 
 ---
@@ -24,32 +28,35 @@ ssh pi-fish "cd ~/Development/fish-guardian && git add -A && git commit -m 'Your
 ## Repository Structure
 
 ```
-┌─────────────────────────────────────┐
-│   Raspberry Pi (pi-fish)            │
-│   ~/Development/fish-guardian/      │
-│   [master branch]                   │
-│   SOURCE OF TRUTH ⭐                │
-│   - Running production code         │
-│   - Active InfluxDB database        │
-│   - All development happens here    │
-└─────────────────────────────────────┘
-              ↓ git pull
-┌─────────────────────────────────────┐
-│   Local Mac                         │
-│   /Users/Max/.../fish-guardian/     │
-│   [main branch]                     │
-│   READ-ONLY REFERENCE               │
-│   - Documentation reference         │
-│   - Offline code browsing           │
-│   - Context preservation            │
-└─────────────────────────────────────┘
+                  ┌─────────────────────────────────────┐
+                  │   GitHub (Source of Truth) ⭐       │
+                  │   github.com/mdvb1001/fish-guardian │
+                  │   [main branch]                     │
+                  │   - Cloud backup                    │
+                  │   - Version history                 │
+                  │   - Accessible anywhere             │
+                  └─────────────────────────────────────┘
+                        ↓ git pull      ↑ git push
+         ┌──────────────┴────────────────┴──────────────┐
+         ↓                                               ↓
+┌──────────────────────────┐             ┌──────────────────────────┐
+│   Raspberry Pi #1        │             │   Local Mac              │
+│   ~/Development/...      │             │   /Users/Max/.../...     │
+│   [main branch]          │             │   [main branch]          │
+│   PRODUCTION ⭐          │             │   READ-ONLY REFERENCE    │
+│   - Running code         │             │   - Documentation        │
+│   - Live database        │             │   - Offline browsing     │
+│   - Edit & push          │             │   - Context files        │
+└──────────────────────────┘             └──────────────────────────┘
+         ↑
+         └─── Future Pi #2, #3, etc. can clone from GitHub
 ```
 
 ---
 
 ## Workflow
 
-### 1. Making Changes (Always on Pi)
+### 1. Making Changes (On Pi)
 
 ```bash
 # SSH to Pi
@@ -75,6 +82,9 @@ git commit -m "Descriptive commit message
 - Why the change was made
 - Any important notes"
 
+# Push to GitHub
+git push origin main
+
 # View the commit
 git log -1
 ```
@@ -85,8 +95,8 @@ git log -1
 # On your Mac
 cd /Users/Max/Desktop/max/coding/codingProjects/personalProjects/fish-guardian
 
-# Pull latest from Pi
-git pull pi-fish master
+# Pull latest from GitHub
+git pull origin main
 
 # Verify sync
 git log -1
@@ -138,13 +148,14 @@ cd ~/Development/fish-guardian
 nano create_dashboard_v7.py
 # ... make edits ...
 
-# 2. Commit on Pi
+# 2. Commit and push to GitHub
 git add create_dashboard_v7.py
 git commit -m "Fix dashboard panel alignment issue"
+git push origin main
 
-# 3. Sync to local (on Mac)
+# 3. Pull on local Mac
 cd /Users/Max/.../fish-guardian
-git pull pi-fish master
+git pull origin main
 ```
 
 ### Scenario 2: View code changes from last week
@@ -172,10 +183,11 @@ nano PROJECT_CONTEXT.md
 
 git add PROJECT_CONTEXT.md
 git commit -m "Update PROJECT_CONTEXT: Week 5 AI training progress"
+git push origin main
 
-# Sync to local
-# (on Mac)
-git pull pi-fish master
+# Pull on Mac
+cd /Users/Max/.../fish-guardian
+git pull origin main
 ```
 
 ### Scenario 5: Check if Pi has uncommitted changes
@@ -362,59 +374,77 @@ git commit -m "WIP: Uncommitted changes before X"
 
 ---
 
-## Future: GitHub Integration (Optional)
+## GitHub Integration ✅ COMPLETE
 
-If you want to add cloud backup to GitHub:
+GitHub is now configured as the single source of truth!
+
+**Repository:** https://github.com/mdvb1001/fish-guardian
+
+### Benefits
+- ✅ Cloud backup of entire project history
+- ✅ Access from anywhere
+- ✅ Easy deployment to new Raspberry Pis
+- ✅ Version history accessible via web
+- 🔮 Future: GitHub Actions for automation (optional)
+
+### Deploying to a New Raspberry Pi
+
+When you want to set up a new Pi:
 
 ```bash
-# 1. Create GitHub repository
-# Go to github.com and create "fish-guardian" repo
+# 1. SSH to new Pi
+ssh new-pi-hostname
 
-# 2. On Pi - add GitHub as remote
-ssh pi-fish
-cd ~/Development/fish-guardian
-git remote add github https://github.com/yourusername/fish-guardian.git
-git branch -M main
-git push -u github main
+# 2. Clone the repository
+cd ~/Development
+git clone https://github.com/mdvb1001/fish-guardian.git
+cd fish-guardian
 
-# 3. On Local - add GitHub remote
-cd /Users/Max/.../fish-guardian
-git remote add github https://github.com/yourusername/fish-guardian.git
+# 3. Set up Python environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt  # (if you create one)
 
-# 4. Now you can push/pull from GitHub too
-git push github main
-git pull github main
+# 4. Create .env file with credentials
+nano .env
+# Add InfluxDB credentials
+
+# 5. Test the system
+python3 motion_track_influx.py
+
+# 6. Make changes and push back to GitHub
+git add motion_track_influx.py
+git commit -m "Configured for Pi #2"
+git push origin main
 ```
-
-Benefits:
-- Cloud backup of entire project history
-- Access from anywhere
-- Share with others
-- GitHub Actions for automation (optional)
 
 ---
 
 ## Current Status
 
-- ✅ Git initialized on Pi (master branch)
+- ✅ Git initialized on Pi (main branch)
 - ✅ Git initialized locally (main branch)
-- ✅ Remote configured: `pi-fish` → Pi repository
-- ✅ Initial commit made: `3e048cf - Initial commit - Week 4 complete`
-- ✅ Local synced with Pi
+- ✅ GitHub repository created: https://github.com/mdvb1001/fish-guardian
+- ✅ Local Mac pushed to GitHub
+- ⏳ Pi needs GitHub remote configured (when online)
+- ✅ Initial commit: `3e048cf - Initial commit - Week 4 complete`
+- ✅ Context docs committed: `7bbbc3a - Add project context and git workflow documentation`
 - ✅ `.gitignore` configured (excludes secrets and large files)
 
-**Last Sync:** October 21, 2025
+**Last Push to GitHub:** October 21, 2025
 
 ---
 
 ## Key Principles
 
-1. **Pi is the source of truth** - All changes happen there first
-2. **Local is read-only** - Only for reference and documentation
-3. **Commit frequently** - After each significant change or milestone
-4. **Meaningful messages** - Future you will thank present you
-5. **Sync regularly** - Keep local updated for offline reference
-6. **Never commit secrets** - `.env` is in `.gitignore` for a reason
+1. **GitHub is the source of truth** - All Pis and local machines sync through GitHub
+2. **Develop on Pi** - Make changes on Raspberry Pi, push to GitHub
+3. **Local is read-only** - Mac is for documentation and offline reference
+4. **Commit frequently** - After each significant change or milestone
+5. **Push after commit** - `git commit` then `git push origin main`
+6. **Pull before working** - Always `git pull origin main` before making changes
+7. **Meaningful messages** - Future you will thank present you
+8. **Never commit secrets** - `.env` is in `.gitignore` for a reason
 
 ---
 
