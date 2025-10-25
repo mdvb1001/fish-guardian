@@ -1,0 +1,8 @@
+Dataset Collection Started: 2025-10-25 16:03:30.244726
+Image Resolution: 1280x720
+Capture Interval: 5 seconds
+Target Images: 3
+--------------------------------------------------
+
+Collection Ended: 2025-10-25 16:03:43.259232
+Total Images Collected: 4
