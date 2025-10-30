@@ -1,8 +1,8 @@
 # Fish Guardian - Project Context
 
-**Last Updated:** October 21, 2025
-**Current Phase:** Week 4 Complete ✅ → Ready for Phase 2 (AI Upgrade)
-**System Status:** Production, operational, collecting data
+**Last Updated:** October 30, 2025
+**Current Phase:** Week 5 (Phase 2) - YOLOv8 Training In Progress 🚀
+**System Status:** Production, operational, custom goldfish model training
 
 ---
 
@@ -14,8 +14,11 @@
 | **Data Collection** | ✅ Active | InfluxDB, ~270 records/hour, 575% collection rate |
 | **Baselines** | ✅ Complete | 5.85 days, 90,304 records, baselines_v1.json |
 | **Dashboard** | ✅ Deployed | Grafana v7, 11 panels, baseline overlays |
-| **Version Control** | ✅ Setup | Git on Pi (master), synced to local (main) |
-| **Next Phase** | 🚀 Ready | Phase 2: AI-based tracking to replace motion detection |
+| **Version Control** | ✅ Setup | Git + GitHub (single source of truth) |
+| **Python Environment** | ✅ Complete | Python 3.9.19, YOLOv8, TFLite, PyCoral installed |
+| **Training Data** | ✅ Complete | 1,134 images collected, 300 annotated in Roboflow |
+| **Model Training** | 🚀 In Progress | YOLOv8n training on Google Colab (~30 min remaining) |
+| **Phase 2 Progress** | 🚀 Active | Week 5: Data collection & model training complete |
 
 ---
 
@@ -29,7 +32,24 @@
   - Baseline computation (baselines_v1.json)
   - Grafana dashboard creation & fixes
   - System stabilization
-- **Week 5+ (Next):** Phase 2 - AI upgrade (YOLOv8/EfficientDet)
+- **Week 5 (Oct 25-30):** 🚀 Phase 2 Active
+  - ✅ Python 3.9 migration complete
+  - ✅ Coral TPU EdgeTPU optimization (202 FPS verified)
+  - ✅ Training data collection (1,134 images)
+  - ✅ Dataset annotation (300 images in Roboflow)
+  - 🚀 YOLOv8n training in progress (Google Colab)
+- **Week 6 (Next):** Model deployment, EdgeTPU conversion, integration
+
+### Key Achievements (Week 5 - Phase 2)
+- ✅ **Python 3.9 Migration:** Compiled from source, all dependencies working
+- ✅ **Coral TPU Optimization:** Fixed compatibility (TFLite 2.7.0), 202 FPS verified
+- ✅ **Training Data Collection:** 1,134 high-quality goldfish images
+  - Original collection: 1,034 images (afternoon/evening/night)
+  - Crystal-clear tank: 100 additional images
+- ✅ **Dataset Annotation:** 300 images annotated with bounding boxes in Roboflow
+- ✅ **Roboflow Setup:** Dataset Version 1 generated (70/20/10 split)
+- ✅ **Google Colab Notebook:** Complete training pipeline created
+- 🚀 **YOLOv8n Training:** Currently training on 300 annotated images (100 epochs)
 
 ### Key Achievements (Week 4)
 - ✅ Collected 5.85 days of continuous baseline data
@@ -37,7 +57,7 @@
 - ✅ Created Grafana Dashboard v7 with 11 panels
 - ✅ Fixed all dashboard panel issues (series limits, aggregation, mappings)
 - ✅ Generated 24-hour analysis reports
-- ✅ Established version control (Git)
+- ✅ Established version control (Git + GitHub)
 - ✅ Updated all documentation
 
 ---
@@ -47,7 +67,8 @@
 ### Hardware
 - **Computer:** Raspberry Pi 4 Model B
 - **Camera:** Camera Module 3 (1280x720 @ 20 FPS)
-- **Network:** 192.168.0.213 (hostname: pi-fish)
+- **Accelerator:** Coral USB Accelerator (Edge TPU) - Connected
+- **Network:** 192.168.0.102 (hostname: pi-fish) - IP changed Oct 25
 - **Tank:** 7 goldfish in aquarium with filter
 
 ### Software Stack
@@ -72,10 +93,34 @@ User Interface (web browser)
 4. **baselines_v1.json** - Computed baseline statistics (64MB)
 
 ### Access Points
-- **SSH:** `ssh pi-fish` (192.168.0.213)
-- **Grafana:** http://192.168.0.213:3000/d/fish-guardian-v7 (admin/admin)
-- **InfluxDB:** http://192.168.0.213:8086
-- **Camera Stream:** http://192.168.0.213:5000 (when active)
+- **SSH:** `ssh pi-fish` (192.168.0.102)
+- **Grafana:** http://192.168.0.102:3000/d/fish-guardian-v7 (admin/admin)
+- **InfluxDB:** http://192.168.0.102:8086
+- **Camera Stream:** http://192.168.0.102:5000 (when active)
+
+### Python Environment (Updated Oct 25, 2025)
+- **Python Version:** 3.9.19 (compiled from source)
+- **Virtual Environment:** `.venv/` (Python 3.9)
+- **Backup:** `.venv.python3.13.backup/` (old Python 3.13 environment)
+- **Key Packages:**
+  - ultralytics 8.3.221 (YOLOv8)
+  - torch 2.8.0, torchvision 0.23.0
+  - opencv-python 4.12.0.88
+  - numpy 1.26.4 (downgraded from 2.0 for TFLite compatibility)
+  - tflite-runtime 2.7.0 (downgraded from 2.14.0 for EdgeTPU compatibility)
+  - pycoral 0.2.0
+  - influxdb-client, picamera2, python-dotenv
+
+### Training Data (Oct 25-30, 2025)
+- **Total Images:** 1,134 goldfish images
+  - Original collection: 1,034 images (438 afternoon, 477 evening, 119 night)
+  - Crystal-clear tank: 100 additional images
+- **Annotated:** 300 images with bounding boxes (Roboflow)
+- **Dataset Split:** 70% train (210), 20% valid (60), 10% test (30)
+- **Location:**
+  - Pi: `~/Development/fish-guardian/training_data/`
+  - Mac: `~/Desktop/goldfish_dataset/`
+  - Roboflow: Project "Goldfish Detection" Version 1
 
 ---
 
@@ -269,6 +314,17 @@ fish-guardian/
 ├── camera_stream.py                   # Live camera web viewer
 ├── view_camera.sh                     # Quick camera launcher
 │
+├── capture_training_data.py           # Training data collection script
+├── capture_100_more.py                # Additional data collection
+├── test_yolov8_rpicam.py              # YOLOv8 camera test
+├── benchmark_edgetpu.py               # EdgeTPU performance test
+│
+├── training_data/                     # Goldfish training images (1,134 images)
+│   ├── afternoon/                     # 438 images
+│   ├── evening/                       # 477 images
+│   ├── night/                         # 119 + 100 images
+│   └── dataset_info.txt               # Collection metadata
+│
 ├── baselines_v1.json                  # Generated baselines (64MB, NOT in git)
 ├── 24h_report.txt                     # Latest analysis report
 │
@@ -281,6 +337,8 @@ fish-guardian/
 ├── GRAFANA_QUERIES_v1.md              # Query library
 ├── QUICK_START_DASHBOARD.md           # Manual dashboard setup
 ├── TESTING_CHECKLIST.md               # Validation procedures
+├── PHASE_2_IMPLEMENTATION_PLAN.md     # AI upgrade roadmap (6 weeks)
+├── CORAL_TPU_OPTIMIZATION.md          # EdgeTPU compatibility fixes
 │
 ├── create_dashboard_v7.py             # Dashboard creation script
 ├── fix_system_status_final.py         # Latest dashboard fixes
@@ -290,9 +348,9 @@ fish-guardian/
     └── planning/                      # Week PDFs and roadmaps
 ```
 
-### On Local Machine
+### On Local Machine (Mac Desktop)
 ```
-fish-guardian/
+fish-guardian/                         # Main project repo
 ├── .git/                              # Git repository (main branch)
 │   └── remote: pi-fish (master)       # Points to Pi as source of truth
 ├── .claude/                           # Claude Code settings
@@ -302,6 +360,18 @@ fish-guardian/
 ├── GIT_WORKFLOW.md                    # How to sync with Pi
 │
 └── [PDFs - planning documents]
+
+~/Desktop/goldfish_dataset/            # Training data (local copy)
+├── training_data/                     # Original 1,034 images from Pi
+│   ├── afternoon/                     # 438 images
+│   ├── evening/                       # 477 images
+│   ├── night/                         # 119 images
+│   └── dataset_info.txt
+│
+└── new_100_images/                    # Crystal-clear 100 additional images
+    └── goldfish_20251027_*.jpg        # Oct 27 collection
+
+~/Desktop/goldfish_yolov8_training.ipynb  # Google Colab training notebook
 ```
 
 ---
@@ -423,6 +493,152 @@ ssh pi-fish 'cd ~/Development/fish-guardian && source .venv/bin/activate && pyth
 ---
 
 ## 📝 Session History
+
+### Session 3: Training Data Collection & YOLOv8 Training (Oct 30, 2025)
+**Major Work:**
+- Completed training data collection: 1,134 goldfish images total
+  - Continued previous collection session (1,034 images)
+  - Captured 100 additional crystal-clear images (user's request for better quality)
+  - Organized by time of day (afternoon, evening, night)
+- Set up Roboflow annotation workflow:
+  - Created "Goldfish Detection" project
+  - Uploaded 595 images to Roboflow (platform auto-filtered duplicates)
+  - Annotated 300 images with "fish" bounding boxes
+  - Generated Dataset Version 1 (70/20/10 train/valid/test split)
+- Created comprehensive Google Colab training notebook:
+  - GPU detection and verification
+  - YOLOv8n model training (100 epochs)
+  - Performance validation and metrics
+  - TFLite INT8 export for EdgeTPU
+  - Complete download package creation
+- Started YOLOv8n training in Google Colab (in progress)
+
+**Key Issues Resolved:**
+1. **Dataset upload confusion** - Only 595 images uploaded vs 1,034
+   - Root Cause: Roboflow auto-filtered very similar consecutive frames
+   - Solution: 595 diverse images is actually better than 1,034 redundant ones
+   - Result: User confirmed 595 is sufficient for training
+
+2. **Annotation quantity question** - How many images to annotate?
+   - User Question: "How many of these do I really need to annotate?"
+   - Answer: 200-300 minimum, 300-400 recommended for 85-90% accuracy
+   - Decision: User annotated 300 images (sweet spot)
+
+3. **Annotation labeling strategy** - Individual fish IDs vs single class?
+   - User Question: "Should I label as 'fish' or 'fish_1', 'fish_2', etc?"
+   - Answer: Single "fish" class for object detection (not tracking)
+   - Reasoning: YOLOv8 does detection, not re-identification
+
+4. **Additional data collection** - User requested more images
+   - User: "The tank is crystal clear and I feel the images will be crisper"
+   - Solution: Created capture_100_more.py script
+   - Result: Successfully captured 100 additional high-quality images
+   - Download: Used rsync to transfer all new images to Mac
+
+**Decisions Made:**
+- Annotate 300 images (not 500+) - sufficient for good performance
+- Use single "fish" class (not individual fish IDs)
+- Train on Google Colab free GPU (not local or Roboflow training)
+- YOLOv8n model (nano variant - optimized for EdgeTPU)
+- 100 epochs with early stopping (patience=20)
+
+**Files Created/Modified:**
+- ✅ goldfish_yolov8_training.ipynb (Colab training notebook)
+- ✅ capture_100_more.py (additional data collection script)
+- ✅ ~/Desktop/goldfish_dataset/training_data/ (1,034 images)
+- ✅ ~/Desktop/goldfish_dataset/new_100_images/ (100 new images)
+- ✅ PROJECT_CONTEXT.md (updated with Session 3 progress)
+
+**User Interaction Highlights:**
+- User provided clear feedback on annotation progress
+- User requested additional images for better quality
+- User asked practical questions about annotation strategy
+- User successfully uploaded notebook to Colab and started training
+
+**Time Investment:**
+- Data collection: 50 minutes (100 images × 30s intervals)
+- Image downloads: ~5 minutes (rsync transfer)
+- Annotation: ~2-3 hours (user, 300 images)
+- Colab notebook creation: ~20 minutes
+- Training time: ~20-30 minutes (in progress)
+- **Total session: ~3-4 hours**
+
+**Next Steps:**
+- Wait for training to complete (~30 minutes)
+- Download trained model from Colab
+- Convert model to EdgeTPU format on Raspberry Pi
+- Integrate into fish-guardian system
+- Test live detection on aquarium
+
+**Training Configuration:**
+- Model: YOLOv8n (nano - 3.2M parameters)
+- Dataset: 300 annotated images (210 train, 60 valid, 30 test)
+- Epochs: 100 with early stopping
+- Image size: 640x640
+- Batch size: 16
+- Device: Google Colab T4 GPU
+- Augmentations: Flip horizontal, brightness ±15%, blur up to 1px
+
+**Expected Results:**
+- mAP50: 0.75-0.85 (good to excellent detection)
+- Inference speed on Coral TPU: 20-30 FPS
+- Model size: ~6MB (PyTorch), ~3MB (TFLite INT8)
+
+---
+
+### Session 2: Phase 2 Start - Python 3.9 Migration (Oct 25, 2025)
+**Major Work:**
+- Migrated entire environment from Python 3.13 → Python 3.9.19
+  - Compiled Python 3.9.19 from source (40+ minutes build time)
+  - Created new virtual environment
+  - Reinstalled all packages successfully
+- Installed Phase 2 AI dependencies:
+  - YOLOv8 (Ultralytics 8.3.221)
+  - PyTorch 2.8.0 + torchvision 0.23.0
+  - TFLite runtime 2.14.0
+  - PyCoral 0.2.0 (with all geospatial dependencies)
+- Tested YOLOv8 on CPU: 1.2s/frame (0.9 FPS) - confirmed need for acceleration
+- Set up GitHub as single source of truth for version control
+- Updated SSH config for new Pi IP address (192.168.0.213 → 192.168.0.102)
+- Created PHASE_2_IMPLEMENTATION_PLAN.md (6-week detailed plan)
+
+**Key Issues Resolved:**
+1. **Python 3.13 incompatibility** - TFLite/PyCoral require Python < 3.10
+   - Solution: Compiled Python 3.9.19 from source
+2. **NumPy 2.x incompatibility** - TFLite built against NumPy 1.x
+   - Solution: Downgraded to numpy 1.26.4
+3. **Missing build dependencies** - libcap-dev, gdal-dev, etc.
+   - Solution: Installed all required system libraries
+4. **Coral TPU library compatibility** - libedgetpu 16.0 (2021) vs TFLite 2.14.0 (2023)
+   - Status: Known issue, will use YOLOv8 CPU/PyTorch for now
+
+**Decisions Made:**
+- Use Python 3.9 as primary environment (not dual Python versions)
+- GitHub as single source of truth (not just Pi)
+- Start with YOLOv8 CPU inference, optimize later
+- Proceed with "Option A" approach (YOLOv8 + EdgeTPU export path)
+
+**Files Created/Modified:**
+- ✅ PROJECT_CONTEXT.md (updated with Phase 2 progress)
+- ✅ GIT_WORKFLOW.md (updated for GitHub workflow)
+- ✅ PHASE_2_IMPLEMENTATION_PLAN.md (created)
+- ✅ .venv/ (rebuilt with Python 3.9)
+- ✅ .venv.python3.13.backup/ (backed up old environment)
+- ✅ ~/.ssh/config (updated IP address)
+
+**Time Investment:**
+- Python compilation: ~45 minutes
+- Package installation: ~15 minutes (ultralytics, PyTorch, etc.)
+- PyCoral + dependencies: ~15 minutes (fiona build)
+- Testing & troubleshooting: ~30 minutes
+- **Total: ~2 hours**
+
+**Next Steps:**
+- Test YOLOv8 on actual camera feed
+- Capture sample images for model evaluation
+- Begin Week 5 Day 3-5 tasks (model selection testing)
+
+---
 
 ### Session 1: Week 4 Completion (Oct 14-21, 2025)
 **Major Work:**

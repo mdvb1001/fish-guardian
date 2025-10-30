@@ -3,8 +3,8 @@
 **Goal:** Replace motion-based tracking with AI object detection for persistent fish IDs
 
 **Timeline:** 4-6 weeks
-**Current Status:** Week 4 complete, ready to begin Phase 2
-**Last Updated:** October 24, 2025
+**Current Status:** Week 5 Day 6 - Model Training In Progress 🚀
+**Last Updated:** October 30, 2025
 
 ---
 
@@ -30,99 +30,109 @@
 ### Hardware Required
 - [x] Raspberry Pi 4 Model B (already have)
 - [x] Camera Module 3 (already have)
-- [ ] **Coral USB Accelerator (Edge TPU)** - MUST ORDER
-- [ ] Short USB 3.0 cable (0.3-1m)
-- [ ] MicroSD 64-128GB U3 (for training data storage)
-- [ ] Camera mount/stabilization
+- [x] **Coral USB Accelerator (Edge TPU)** - ✅ CONNECTED
+- [x] USB 3.0 connection (using Pi's USB 3.0 port)
 
 ### Software Already Installed
-- [x] Python 3.11
-- [x] OpenCV
+- [x] Python 3.9.19 (compiled from source - Oct 25)
+- [x] OpenCV 4.12.0.88
 - [x] InfluxDB 2.7
 - [x] Grafana 10.1
-- [x] Git version control
+- [x] Git + GitHub version control
 
-### Software To Install
-- [ ] EdgeTPU runtime (`libedgetpu1-std`)
-- [ ] TFLite runtime (`tflite-runtime`)
-- [ ] PyCoral (`pycoral`)
-- [ ] PyTorch (for training, if doing custom model)
-- [ ] Roboflow or LabelStudio (for annotation)
+### Software Installed (Phase 2)
+- [x] EdgeTPU runtime (`libedgetpu1-std` 16.0) - Oct 25
+- [x] TFLite runtime (`tflite-runtime` 2.7.0) - Oct 25
+- [x] PyCoral (`pycoral` 0.2.0) - Oct 25
+- [x] PyTorch 2.8.0 + torchvision 0.23.0 - Oct 25
+- [x] Ultralytics YOLOv8 (8.3.221) - Oct 25
+- [x] Roboflow (for annotation) - Oct 27
 
 ---
 
 ## 🗓️ Implementation Timeline
 
-### Week 5: Hardware & Model Selection (Days 1-7)
+### Week 5: Hardware & Model Selection (Days 1-7) ✅ COMPLETE
 
-**Day 1-2: Order Hardware**
-- [ ] Order Coral USB Accelerator
-- [ ] Order USB 3.0 cable
-- [ ] Order additional MicroSD card if needed
-- [ ] Estimated delivery: 3-7 days
+**Day 1: Python Environment Migration** ✅
+- [x] Discovered Python 3.13 incompatibility with TFLite/PyCoral
+- [x] Compiled Python 3.9.19 from source (~45 minutes)
+- [x] Created new virtual environment
+- [x] Installed all Phase 2 dependencies successfully
 
-**Day 3-5: Research & Selection**
-- [ ] Test pre-trained models (no Coral needed yet):
-  - YOLOv8n (Nano) - CPU inference
-  - YOLOv8s (Small) - CPU inference
-  - Evaluate detection accuracy on your goldfish
-- [ ] Benchmark FPS on Pi 4 CPU (expect 2-5 FPS)
-- [ ] Decide: pre-trained vs fine-tuning approach
+**Day 2: Hardware Setup & Testing** ✅
+- [x] Connected Coral USB Accelerator (already owned)
+- [x] Installed EdgeTPU runtime (libedgetpu1-std 16.0)
+- [x] Fixed Coral TPU compatibility (downgraded TFLite 2.14.0 → 2.7.0)
+- [x] Verified EdgeTPU performance: **202 FPS on MobileNet V2** ✅
+- [x] Tested YOLOv8n on CPU: 1.5s/frame (0.6 FPS) - too slow
+- [x] Tested YOLOv8n on live camera: detected "vase" instead of goldfish
+- [x] **Decision: Fine-tuning required** ✅
 
-**Day 6-7: Data Collection Planning**
-- [ ] Set up image capture script
-- [ ] Capture 100 sample images (day/night mix)
-- [ ] Review detection quality
-- [ ] Decision point: proceed with pre-trained or collect training data?
+**Day 3: Training Data Collection** ✅
+- [x] Created `capture_training_data.py` script
+- [x] Captured **1,034 images** over multiple sessions:
+  - 438 afternoon images
+  - 477 evening images
+  - 119 night images
+- [x] Captured **100 additional crystal-clear images** (user request)
+- [x] **Total dataset: 1,134 high-quality goldfish images** ✅
+- [x] Downloaded all images to Mac Desktop
 
-**Deliverables:**
-- Hardware ordered
-- YOLOv8 model tested on CPU
-- Sample images captured
-- Decision made on training approach
+**Deliverables:** ✅
+- [x] Coral TPU working (202 FPS verified)
+- [x] YOLOv8 tested - fine-tuning confirmed necessary
+- [x] 1,134 training images captured
+- [x] Decision made: Fine-tune YOLOv8n on custom goldfish dataset
 
 ---
 
-### Week 6: Model Preparation (Days 8-14)
+### Week 6: Model Preparation (Days 8-14) 🚀 IN PROGRESS
 
-**If Pre-Trained Model Path:**
-- [ ] Download YOLOv8n pre-trained weights
-- [ ] Convert to TFLite format
-- [ ] Compile for EdgeTPU (when Coral arrives)
-- [ ] Test inference speed on sample images
+**Day 8: Roboflow Setup & Annotation Start** ✅
+- [x] Created Roboflow account (free tier)
+- [x] Created "Goldfish Detection" project
+- [x] Uploaded 595 images (Roboflow auto-filtered duplicates)
+- [x] Started annotation process
 
-**If Fine-Tuning Path (Recommended):**
+**Day 9: Dataset Annotation** ✅
+- [x] Annotated **300 images** with bounding boxes
+  - Single class: "fish" (not individual fish IDs)
+  - All goldfish labeled in each frame
+- [x] Generated Dataset Version 1
+  - Train: 70% (210 images)
+  - Valid: 20% (60 images)
+  - Test: 10% (30 images)
+- [x] Exported dataset in YOLOv8 format
+- [x] **User annotation time: ~2-3 hours** ✅
 
-**Day 8-10: Dataset Collection**
-- [ ] Capture 500-800 images from tank
-  - Morning (100 images)
-  - Midday (200 images)
-  - Evening (200 images)
-  - Night (100 images)
-- [ ] Variety: feeding time, resting, active swimming
-- [ ] Script: `capture_training_data.py`
+**Day 10: Training Environment Setup** ✅
+- [x] Created comprehensive Google Colab notebook
+  - GPU detection and verification
+  - YOLOv8n training pipeline (100 epochs)
+  - Performance validation
+  - TFLite INT8 export for EdgeTPU
+  - Download package creation
+- [x] User uploaded notebook to Google Colab
+- [x] Started training with T4 GPU
 
-**Day 11-13: Annotation**
-- [ ] Set up Roboflow account (free tier)
-- [ ] Upload images to Roboflow
-- [ ] Annotate all 7 goldfish in each frame
-  - Class: "goldfish"
-  - Bounding boxes around each fish
-- [ ] Export dataset in YOLOv8 format
-- [ ] Estimated time: 3-5 hours
-
-**Day 14: Model Training Setup**
-- [ ] Set up training environment:
-  - Local PC with GPU (if available), OR
-  - Google Colab (free tier), OR
-  - Kaggle notebooks (free)
-- [ ] Install YOLOv8 training dependencies
-- [ ] Prepare training script
+**Day 11: Model Training** 🚀 IN PROGRESS
+- [x] Training YOLOv8n on 300 annotated goldfish images
+  - Base: COCO-pretrained YOLOv8n
+  - Epochs: 100 (with early stopping patience=20)
+  - Batch size: 16
+  - Image size: 640x640
+  - Device: Google Colab T4 GPU
+- [x] Augmentations: Horizontal flip, brightness ±15%, blur 1px
+- [ ] Expected completion: ~20-30 minutes from start
+- [ ] Expected mAP50: 0.75-0.85
 
 **Deliverables:**
-- 500-800 annotated images
-- Dataset ready for training
-- Training environment configured
+- [x] 300 annotated images (exceeds 200-300 minimum) ✅
+- [x] Dataset ready and uploaded to Colab ✅
+- [x] Training environment configured ✅
+- [ ] Trained model (`best.pt`) - In progress
+- [ ] TFLite model for EdgeTPU conversion - In progress
 
 ---
 
