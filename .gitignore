@@ -42,3 +42,10 @@ baselines_v1.json
 
 # System
 .cache/
+# AI Model Files
+*.pt
+*.onnx
+*.tflite
+*_edgetpu.tflite
+coco_labels.txt
+yolov8_test.jpg
