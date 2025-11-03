@@ -1,8 +1,8 @@
 # Fish Guardian - Project Context
 
-**Last Updated:** October 30, 2025
-**Current Phase:** Week 5 (Phase 2) - YOLOv8 Training In Progress 🚀
-**System Status:** Production, operational, custom goldfish model training
+**Last Updated:** November 2, 2025
+**Current Phase:** Week 6 (Phase 2) - EdgeTPU Integration Complete! 🎉
+**System Status:** Production, operational, YOLOv8 model running at 11.9 FPS on EdgeTPU
 
 ---
 
@@ -17,8 +17,9 @@
 | **Version Control** | ✅ Setup | Git + GitHub (single source of truth) |
 | **Python Environment** | ✅ Complete | Python 3.9.19, YOLOv8, TFLite, PyCoral installed |
 | **Training Data** | ✅ Complete | 1,134 images collected, 300 annotated in Roboflow |
-| **Model Training** | 🚀 In Progress | YOLOv8n training on Google Colab (~30 min remaining) |
-| **Phase 2 Progress** | 🚀 Active | Week 5: Data collection & model training complete |
+| **Model Training** | ✅ Complete | 98.8% mAP50, YOLOv8n trained on 300 images |
+| **EdgeTPU Model** | ✅ Working | 11.9 FPS (10.8x faster than CPU), INT8 quantized |
+| **Phase 2 Progress** | 🚀 Active | Week 6: Model trained, EdgeTPU working, ready for integration |
 
 ---
 
@@ -493,6 +494,94 @@ ssh pi-fish 'cd ~/Development/fish-guardian && source .venv/bin/activate && pyth
 ---
 
 ## 📝 Session History
+
+### Session 4: EdgeTPU Integration Complete! (Nov 2, 2025) 🎉
+**Major Achievement:** YOLOv8 goldfish model running at 11.9 FPS on Coral EdgeTPU (10.8x speedup)
+
+**Major Work:**
+- Diagnosed EdgeTPU performance issue: FLOAT32 vs INT8 quantization
+- Created direct EdgeTPU export workflow using `format='edgetpu'` in Colab
+- Successfully exported model with full INT8 quantization (input, weights, output)
+- Tested and verified EdgeTPU acceleration: 11.9 FPS vs 1.1 FPS CPU
+- Created 4 Colab notebooks for complete training → EdgeTPU pipeline
+- Documented entire process in CORAL_TPU_OPTIMIZATION.md
+- Committed all work to GitHub with detailed documentation
+
+**The Problem:**
+- Initial TFLite export using `format='tflite', int8=True` created FLOAT32 input/output layers
+- Only internal weights were quantized to INT8
+- EdgeTPU cannot accelerate models with FLOAT32 interfaces
+- Result: 1.1 FPS running on CPU, not TPU
+
+**The Solution:**
+```python
+# In Google Colab
+model.export(format='edgetpu', imgsz=640)
+# Creates: goldfish_best_full_integer_quant_edgetpu.tflite
+```
+- This creates proper INT8 model with INT8 inputs, INT8 weights, INT8 outputs
+- EdgeTPU can now accelerate the model
+- Result: **11.9 FPS on EdgeTPU!**
+
+**Performance Results:**
+| Model Type | Input Type | FPS | Speedup |
+|------------|-----------|-----|---------|
+| FLOAT32 TFLite (CPU) | FLOAT32 | 1.1 FPS | Baseline |
+| INT8 TFLite (EdgeTPU) | INT8 | 11.9 FPS | **10.8x** |
+
+**Files Created:**
+- ✅ `notebooks/goldfish_edgetpu_direct_export.ipynb` - Working export method
+- ✅ `notebooks/goldfish_tflite_export.ipynb` - FLOAT32 export (reference)
+- ✅ `notebooks/goldfish_edgetpu_compile.ipynb` - Compiler approach (reference)
+- ✅ `notebooks/goldfish_yolov8_training.ipynb` - Training notebook
+- ✅ `docs/CORAL_TPU_OPTIMIZATION.md` - Updated with complete guide
+- ✅ `docs/SESSION_SUMMARY_NOV_2_2025.md` - Detailed session summary
+- ✅ `models/goldfish_best_edgetpu_int8.tflite` - Working INT8 model (3.4 MB)
+
+**Key Learnings:**
+1. YOLOv8's `format='tflite'` doesn't create full INT8 quantization
+2. Use `format='edgetpu'` for proper EdgeTPU export
+3. INT8 models require special preprocessing (UINT8 → INT8 conversion)
+4. EdgeTPU compiler needs Python 3.10+ (run in Colab, not on Pi)
+5. Model input dtype verification is critical (check with interpreter)
+
+**Troubleshooting Attempts:**
+- ❌ 320x320 resolution test - No improvement (model still processes 640x640)
+- ❌ EdgeTPU compiler on Pi - Installation failed (apt-key deprecated)
+- ❌ Two-stage export (TFLite → EdgeTPU) - Still created FLOAT32
+- ✅ Direct EdgeTPU export in Colab - SUCCESS!
+
+**Git Commits:**
+- bbdd8b0 - "YOLOv8 EdgeTPU Integration Complete - 11.9 FPS Achieved"
+- 468d5c1 - "Add session summary for Nov 2 EdgeTPU integration"
+
+**Documentation:**
+- Complete technical guide in `docs/CORAL_TPU_OPTIMIZATION.md`
+- Session summary with all details in `docs/SESSION_SUMMARY_NOV_2_2025.md`
+- INT8 preprocessing code examples provided
+- Export workflow fully documented
+
+**Time Investment:**
+- EdgeTPU troubleshooting: ~2 hours
+- Colab notebook creation: ~30 minutes
+- Testing and validation: ~30 minutes
+- Documentation: ~1 hour
+- **Total: ~4 hours**
+
+**Next Steps:**
+- Integrate INT8 EdgeTPU model into fish-guardian system
+- Replace motion detection with YOLOv8 AI detection
+- Test live goldfish detection on actual tank
+- Verify all 7 fish detected consistently
+
+**Status:** ✅ EdgeTPU model ready for integration tomorrow!
+
+**See Also:**
+- `docs/CORAL_TPU_OPTIMIZATION.md` - Complete technical reference
+- `docs/SESSION_SUMMARY_NOV_2_2025.md` - Full session details
+- `notebooks/goldfish_edgetpu_direct_export.ipynb` - Use this for future exports
+
+---
 
 ### Session 3: Training Data Collection & YOLOv8 Training (Oct 30, 2025)
 **Major Work:**
