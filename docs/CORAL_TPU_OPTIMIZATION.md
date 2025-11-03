@@ -1,7 +1,7 @@
 # Coral TPU Optimization - Successfully Resolved
 
-**Date:** October 25, 2025
-**Status:** ✅ WORKING - EdgeTPU operational with TFLite 2.7.0
+**Date:** October 25, 2025 (initial setup), November 2, 2025 (YOLOv8 integration complete)
+**Status:** ✅ FULLY WORKING - YOLOv8 goldfish model running at 11.9 FPS on EdgeTPU
 
 ## Problem & Solution
 
@@ -46,9 +46,12 @@ pip install tflite-runtime==2.7.0
 ### EdgeTPU Performance (Verified)
 | Model | Inference Time | FPS | Status |
 |-------|---------------|-----|---------|
-| MobileNet V2 (EdgeTPU) | 5ms | 202 FPS | ✅ Tested |
-| YOLOv8n (CPU PyTorch) | 1547ms | 0.6 FPS | ✅ Tested |
-| YOLOv8n (EdgeTPU) | ~30-50ms | 20-30 FPS | 📋 Projected |
+| MobileNet V2 (EdgeTPU) | 5ms | 202 FPS | ✅ Tested Oct 25 |
+| YOLOv8n (CPU PyTorch) | 1547ms | 0.6 FPS | ✅ Tested Oct 25 |
+| YOLOv8n Goldfish FLOAT32 (CPU) | 877ms | 1.1 FPS | ✅ Tested Nov 2 |
+| **YOLOv8n Goldfish INT8 (EdgeTPU)** | **84ms** | **11.9 FPS** | **✅ Tested Nov 2** |
+
+**Key Achievement:** 10.8x speedup over FLOAT32 model by using proper INT8 quantization!
 
 ## Next Steps for EdgeTPU Integration
 
@@ -130,14 +133,148 @@ pip install tflite-runtime==2.7.0
 └── yolov8n.onnx                  # ONNX export (for reference)
 ```
 
+## YOLOv8 EdgeTPU Integration (November 2, 2025)
+
+### Challenge: FLOAT32 vs INT8 Quantization
+
+**Problem Discovered:**
+- Initial TFLite export using `format='tflite', int8=True` created models with FLOAT32 input/output layers
+- Only internal weights were quantized to INT8
+- EdgeTPU **cannot accelerate** models with FLOAT32 interfaces
+- Result: 1.1 FPS (running on CPU, not TPU)
+
+**Root Cause:**
+YOLOv8's standard TFLite export doesn't create full integer quantization by default. The model structure was:
+- Input layer: FLOAT32 (0-1 range)
+- Internal weights: INT8 ✅
+- Output layer: FLOAT32
+- **EdgeTPU requirement:** INT8 for ALL layers (input, weights, output)
+
+### Solution: Direct EdgeTPU Export
+
+**Working Method:**
+```python
+# In Google Colab (Python 3.10+)
+from ultralytics import YOLO
+
+model = YOLO('goldfish_best.pt')
+model.export(
+    format='edgetpu',  # ← KEY: Use 'edgetpu' not 'tflite'
+    imgsz=640,
+)
+```
+
+This creates: `goldfish_best_full_integer_quant_edgetpu.tflite`
+
+**Key Differences:**
+| Export Method | Input Type | Output Type | EdgeTPU Accelerated | FPS |
+|---------------|-----------|-------------|---------------------|-----|
+| `format='tflite'` | FLOAT32 | FLOAT32 | ❌ No | 1.1 FPS |
+| `format='edgetpu'` | **INT8** | **INT8** | ✅ Yes | **11.9 FPS** |
+
+### INT8 Preprocessing Requirements
+
+**Critical:** INT8 models require different preprocessing:
+
+```python
+import numpy as np
+from PIL import Image
+
+# Load image
+image = Image.open('test.jpg')
+image_resized = image.resize((640, 640), Image.LANCZOS)
+
+# Convert UINT8 (0-255) to INT8 (-128 to 127)
+input_data = np.array(image_resized, dtype=np.uint8).astype(np.float32)
+input_data = (input_data - 128).astype(np.int8)
+input_data = np.expand_dims(input_data, axis=0)
+
+# Now set tensor
+interpreter.set_tensor(input_details['index'], input_data)
+```
+
+**Common Mistake:** Trying to subtract 128 directly from UINT8 causes overflow to INT16.
+**Solution:** Convert to FLOAT32 first, then subtract, then cast to INT8.
+
+### Export Workflow (Colab Notebook)
+
+Created: `goldfish_edgetpu_direct_export.ipynb`
+
+**Steps:**
+1. Upload `goldfish_best.pt` to Colab
+2. Install EdgeTPU compiler (runs in Colab, not on Pi)
+3. Export with `format='edgetpu'`
+4. Download `goldfish_best_full_integer_quant_edgetpu.tflite`
+5. Upload to Raspberry Pi
+
+**Why Colab?**
+- EdgeTPU compiler and onnx2tf require Python 3.10+
+- Raspberry Pi uses Python 3.9.19 (incompatible)
+- Colab has all dependencies pre-configured
+
+### Files Created
+
+**Models on Raspberry Pi:**
+```
+~/Development/fish-guardian/models/
+├── goldfish_best.pt                      # 6.0 MB - PyTorch trained model
+├── goldfish_best.onnx                    # 12 MB - ONNX intermediate
+├── goldfish_best_int8.tflite             # 3.2 MB - FLOAT32 I/O (doesn't work)
+├── goldfish_best_edgetpu.tflite          # 3.2 MB - FLOAT32 I/O (doesn't work)
+└── goldfish_best_edgetpu_int8.tflite     # 3.4 MB - INT8 I/O (WORKS! 11.9 FPS)
+```
+
+**Colab Notebooks (on Desktop):**
+```
+~/Desktop/
+├── goldfish_yolov8_training.ipynb         # Training notebook
+├── goldfish_tflite_export.ipynb           # FLOAT32 export (didn't work)
+├── goldfish_edgetpu_compile.ipynb         # EdgeTPU compiler (didn't work)
+└── goldfish_edgetpu_direct_export.ipynb   # ✅ WORKING solution
+```
+
+### Troubleshooting Attempts (What Didn't Work)
+
+1. **320x320 Resolution Test**
+   - Captured at 320x320, upscaled to 640x640 for model
+   - Result: Still 1.1 FPS (no improvement)
+   - Reason: Model still processes 640x640 pixels
+
+2. **EdgeTPU Compiler on Pi**
+   - Attempted to install edgetpu-compiler on Pi
+   - Failed: apt-key deprecated, GitHub URLs 404
+   - Solution: Run compiler in Colab instead
+
+3. **Two-Stage Export (TFLite → EdgeTPU)**
+   - Export to TFLite first, then compile with edgetpu_compiler
+   - Result: Still created FLOAT32 model
+   - Solution: Use direct `format='edgetpu'` export
+
+### Model Performance Metrics
+
+**Training Results:**
+- Dataset: 300 annotated goldfish images
+- mAP50: 0.988 (98.8%) - Excellent!
+- Precision: 0.965 (96.5%)
+- Recall: 0.968 (96.8%)
+- Training time: 10.9 minutes on Colab T4 GPU
+
+**Inference Performance:**
+- Input: 640x640 RGB images
+- Output: (1, 5, 8400) - YOLOv8 detection format
+- EdgeTPU Acceleration: ✅ Active
+- Speed: 11.9 FPS (84ms per frame)
+- Usability: Excellent for monitoring (checks fish ~12 times/second)
+
 ## Return to This After Training
 
-**When to revisit:** Week 7 (after model training)
-**Priority:** HIGH - Required for 15-20 FPS target
-**Time estimate:** 2-4 hours for full integration
+**Status:** ✅ COMPLETE - YOLOv8 goldfish model working on EdgeTPU at 11.9 FPS
+**Next Step:** Integrate into fish-guardian monitoring system
+**Priority:** Ready for integration
 
 ---
 
 **Document created:** October 25, 2025
-**Last tested:** October 25, 2025 - WORKING
+**YOLOv8 integration:** November 2, 2025 - SUCCESS
+**Last tested:** November 2, 2025 - 11.9 FPS achieved
 **Author:** Claude (Fish Guardian Assistant)
