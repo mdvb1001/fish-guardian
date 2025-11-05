@@ -29,7 +29,7 @@ if not INFLUX_TOKEN:
     raise ValueError("INFLUX_TOKEN not set in .env file")
 
 # --- Camera & Detection Parameters ---
-FRAME_W, FRAME_H = 1280, 720
+FRAME_W, FRAME_H = 640, 640  # Phase 2A: Reduced resolution for better FPS
 DETECTION_SIZE = 640              # YOLOv8 model input size
 FPS_TARGET = 10                   # Target FPS (YOLOv8 @ 11.9 FPS)
 MAX_ASSOC_DIST = 300              # Max pixel distance for track association (increased for 1.1 FPS)
